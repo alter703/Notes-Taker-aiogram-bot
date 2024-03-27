@@ -60,29 +60,33 @@ async def put_notes(message: Message, state: FSMContext):
         await message.answer('Type the title to find your note')
 
 
-@router.message(F.text, ~F.text.lower().in_({'get all notes', 'get note by title'})) # ~(тильда) допомагає ігнорувати вказані речі...
-async def ask_set_notes(message: Message):
-    global preview_buffer
-
-    preview_buffer = await presave_note(user_id=message.from_user.id, text=message.text)
-    await message.answer('Do you want to save it?', reply_markup=yesno)
-
-
 @router.message(ChooseNote.title)
 async def find_note(message: Message, state: FSMContext):
+    await state.update_data(name=message.text)
     try:
         t = await get_one_note(user_id=message.from_user.id, title=message.text)
         print(t)
     except Exception as e:
         print(e)
     else:
-        await state.update_data(name=message.text)
+        await state.clear()
 
 
 @router.message(DeleteNote.title)
-async def find_note(message: Message, state: FSMContext):
-    await delete_one_note(user_id=message.from_user.id, title=message.text)
+async def delete_note(message: Message, state: FSMContext):
+    print(message.chat.id, message.text)
     await state.update_data(name=message.text)
+
+    await delete_one_note(user_id=message.chat.id, title=message.text)
+    await state.clear()
+
+
+@router.message(F.text, ~F.text.lower().in_({'get all notes', 'get note by title'})) # ~(тильда) допомагає ігнорувати вказані речі...
+async def ask_set_notes(message: Message):
+    global preview_buffer
+
+    preview_buffer = await presave_note(user_id=message.from_user.id, text=message.text)
+    await message.answer('Do you want to save it?', reply_markup=yesno)
 
 
 @router.callback_query(F.data.in_({'do_save', 'do_not_save'}))
