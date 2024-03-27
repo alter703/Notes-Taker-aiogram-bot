@@ -21,13 +21,13 @@ async def get_one_note(user_id, title):
     conn = await asyncpg.connect(user=USER, database=DATABASE,
                                   port='5432', host='127.0.0.1',
                                     password='1234')
-    # try:
-    one_note = await conn.fetchrow("""
-    SELECT (title, content) FROM notes WHERE user_id = $1 AND title = $2;
+    try:
+        one_note = await conn.fetchrow("""
+        SELECT (title, content) FROM notes WHERE user_id = $1 AND title = $2;
 
-    """, user_id, title)
-    # finally:
-    await conn.close()
+        """, user_id, title)
+    finally:
+        await conn.close()
     return one_note
 
 
