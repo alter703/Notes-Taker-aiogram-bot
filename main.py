@@ -1,22 +1,18 @@
 import asyncio
 import logging
 
-from aiogram import Bot, Dispatcher, F
-from aiogram.types import Message, CallbackQuery
-from aiogram.filters import CommandStart, Command 
+from aiogram import Bot, Dispatcher
 
 from Bot.config import _TOKEN
+from Bot.handlers import router
+
 
 bot = Bot(_TOKEN)
 dp = Dispatcher()
 
 
-@dp.message(CommandStart())
-async def cmd_start(message: Message):
-    await message.answer('Hello!')
-
-
 async def main():
+    dp.include_router(router)
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 

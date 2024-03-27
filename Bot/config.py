@@ -1,1 +1,3 @@
-_TOKEN = '6683823511:AAHt4QFyIatdeHPOJxB7pZEDZrgnVIOr0Ms'
+import os
+
+_TOKEN = os.getenv('BOT_TOKEN')
