@@ -1,4 +1,5 @@
 # port and ip are local
+import os
 
-USER = 'aio_user'
-DATABASE = 'aio_db'
+USER = os.getenv("USER_DB")
+DATABASE = os.getenv("DATABASE")
