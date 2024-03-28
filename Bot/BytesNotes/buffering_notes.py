@@ -26,4 +26,5 @@ async def clear_buffer(buffer):
 
 
 if __name__ == '__main__':
-    print(read_note())
+    r = asyncio.run(read_note('#buffer'))
+    print(r)

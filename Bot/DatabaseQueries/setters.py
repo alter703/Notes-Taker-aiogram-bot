@@ -11,6 +11,6 @@ async def set_new_note(user_id, title, content) -> None:
     try:
         await conn.execute("""
             INSERT INTO notes (user_id, title, content) VALUES ($1, $2, $3);
-        """, int(user_id.strip('\n')), title, content)
+        """, int(user_id.strip('\n')), str(title.strip('\n')), str(content))
     finally:
         await conn.close()

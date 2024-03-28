@@ -7,7 +7,7 @@ from Bot.config import _TOKEN
 from Bot.handlers import router
 
 
-bot = Bot(_TOKEN)
+bot = Bot(_TOKEN, parse_mode='markdown')
 dp = Dispatcher()
 
 
