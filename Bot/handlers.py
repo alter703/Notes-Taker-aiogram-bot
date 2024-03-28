@@ -65,8 +65,8 @@ async def put_notes(message: Message, state: FSMContext):
         rows = await get_all_notes(user_id=message.from_user.id)
 
         if rows:
-            for row in rows:
-                await message.answer(f'{row.get('row')[0]}\n\n{row.get('row')[1]}')
+            for index_row, row in enumerate(rows, start=1):
+                await message.answer(f'*{index_row}.{row.get('row')[0]}*\n\n{row.get('row')[1]}')
                 await asyncio.sleep(0.2)
         else:
             await message.answer('You have no any notes in your cloud')
@@ -80,7 +80,7 @@ async def put_notes(message: Message, state: FSMContext):
 async def find_note(message: Message, state: FSMContext):
     await state.update_data(name=message.text)
     try:
-        note = await get_one_note(user_id=message.from_user.id, title=message.text)
+        note = await get_one_note(user_id=message.from_user.id, title=message.text.capitalize())
         await message.answer(''.join(f'*{note[0].get('row')[0]}*\n\n{note[0].get('row')[1]}'))
     except IndexError:
         await message.answer('Sorry, I cannot find this note')
@@ -92,7 +92,7 @@ async def find_note(message: Message, state: FSMContext):
 async def delete_note(message: Message, state: FSMContext):
     await state.update_data(name=message.text)
 
-    await delete_one_note(user_id=message.chat.id, title=message.text)
+    await delete_one_note(user_id=message.chat.id, title=message.text.capitalize())
     await state.clear()
 
 
@@ -101,8 +101,9 @@ async def send_document_note(message: Message, state: FSMContext):
     await state.update_data(name=message.text)
 
     try:
-        document = await create_dock(user_id=message.chat.id, title=message.text)
-        await message.answer_document(BufferedInputFile(file=document.read(), filename=f'{message.text.replace(' ', '_')[:10]}.docx'))
+        document = await create_dock(user_id=message.chat.id, title=message.text.capitalize())
+        await message.answer_document(BufferedInputFile(file=document.read(), filename=f'{message.text.capitalize().replace(' ', '_')[:10]}.docx'))
+        clear_buffer(document)
         document.close()
     except IndexError:
         await message.answer('Sorry, I cannot find this note')
@@ -115,7 +116,7 @@ async def send_document_note(message: Message, state: FSMContext):
 async def ask_set_notes(message: Message):
     global preview_buffer
 
-    preview_buffer = await presave_note(user_id=message.from_user.id, text=message.text)
+    preview_buffer = await presave_note(user_id=message.from_user.id, text=message.text.capitalize())
     await message.answer('Do you want to save it?', reply_markup=yesno)
 
 
@@ -125,10 +126,13 @@ async def saving_process(callback: CallbackQuery):
     if callback.data == 'do_save':
         text = await read_note(preview_buffer)
         await set_new_note(user_id=text[0].decode(), title=text[1].decode(), content=''.join(text[2].decode()))
+
+        await callback.message.answer(f'Your note {text[1].decode()} is saved!')
     else:
         await callback.message.answer('Fine')
 
     await clear_buffer(preview_buffer)
+    preview_buffer.close()
 
 
 @router.callback_query(F.data.in_({'do_delete', 'do_not_delete'}))
