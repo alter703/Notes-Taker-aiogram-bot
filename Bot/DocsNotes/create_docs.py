@@ -20,7 +20,3 @@ async def create_dock(user_id, title):
     buf.seek(0)
 
     return buf
-    # with open('l.zip', 'wb') as file:
-    #     buf.seek(0)
-    #     file.write(buf.read())
-    
