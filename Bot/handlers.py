@@ -11,9 +11,8 @@ from aiogram.fsm.context import FSMContext
 from .inline_keyboards import yesno, yesno_delete
 from .reply_keyboards import get_note_kb
 
-from .BytesNotes.buffering_notes import presave_note, clear_buffer, read_note
+from .BytesNotes.buffering_notes import clear_buffer, presave_note2, read_text_and_save
 
-from .DatabaseQueries.setters import set_new_note
 from .DatabaseQueries.getters import get_all_notes, get_one_note
 from .DatabaseQueries.removers import delete_one_note, delete_all_notes
 
@@ -34,27 +33,27 @@ class SendNoteAsDock(StatesGroup):
 
 
 @router.message(CommandStart())
-async def cmd_start(message: Message):
+async def start_chat(message: Message):
     await message.answer('Hello!', reply_markup=get_note_kb)
 
 
 @router.message(Command('help'), ~F.text.in_({'get all notes', 'get note by title'}))
-async def cmd_start(message: Message):
+async def help_command(message: Message):
     await message.answer('I am here!')
 
 
 @router.message(Command('get_dock'), ~F.text.in_({'get all notes', 'get note by title'}))
-async def cmd_start(message: Message, state: FSMContext):
+async def ask_title_to_put_dock(message: Message, state: FSMContext):
     await state.set_state(SendNoteAsDock.title)
     await message.answer('Type the title to get your note as document (.docx)')
 
 
 @router.message(Command('delete_all'), ~F.text.in_({'get all notes', 'get note by title'}))
-async def cmd_start(message: Message):
+async def delete_all(message: Message):
     await message.answer('Do You want do delete all your notes? Are you sure? That is irreversable action!', reply_markup=yesno_delete)
 
 @router.message(Command('delete_one'), ~F.text.in_({'get all notes', 'get note by title'}))
-async def cmd_start(message: Message, state: FSMContext):
+async def delete_one(message: Message, state: FSMContext):
     await state.set_state(DeleteNote.title)
     await message.answer('Type the title to delete your note')
 
@@ -93,6 +92,7 @@ async def delete_note(message: Message, state: FSMContext):
     await state.update_data(name=message.text)
 
     await delete_one_note(user_id=message.chat.id, title=message.text.capitalize())
+    await message.answer(f'Your note {message.text} is delete!')
     await state.clear()
 
 
@@ -114,25 +114,36 @@ async def send_document_note(message: Message, state: FSMContext):
 
 @router.message(F.text, ~F.text.lower().in_({'get all notes', 'get note by title'})) # ~(тильда) допомагає ігнорувати вказані речі...
 async def ask_set_notes(message: Message):
-    global preview_buffer
-
-    preview_buffer = await presave_note(user_id=message.from_user.id, text=message.text.capitalize())
+    await presave_note2(user_id=message.from_user.id, text=message.text.capitalize())
     await message.answer('Do you want to save it?', reply_markup=yesno)
+
+    # global preview_buffer
+
+    # preview_buffer = await presave_note(user_id=message.from_user.id, text=message.text.capitalize())
+    # await message.answer('Do you want to save it?', reply_markup=yesno)
+
 
 
 @router.callback_query(F.data.in_({'do_save', 'do_not_save'}))
 async def saving_process(callback: CallbackQuery):
-    global preview_buffer
-    if callback.data == 'do_save':
-        text = await read_note(preview_buffer)
-        await set_new_note(user_id=text[0].decode(), title=text[1].decode(), content=''.join(text[2].decode()))
 
-        await callback.message.answer(f'Your note {text[1].decode()} is saved!')
+    if callback.data == 'do_save':
+        text = await read_text_and_save(callback.message.chat.id)
+        await callback.message.answer(f'Your note {text[1]} is saved!')
     else:
         await callback.message.answer('Fine')
 
-    await clear_buffer(preview_buffer)
-    preview_buffer.close()
+    # global preview_buffer
+    # if callback.data == 'do_save':
+    #     text = await read_note(preview_buffer)
+    #     await set_new_note(user_id=text[0].decode(), title=text[1].decode(), content=''.join(text[2].decode()))
+
+    #     await callback.message.answer(f'Your note {text[1].decode().strip('\n')} is saved!')
+    # else:
+    #     await callback.message.answer('Fine')
+
+    # await clear_buffer(preview_buffer)
+    # preview_buffer.close()
 
 
 @router.callback_query(F.data.in_({'do_delete', 'do_not_delete'}))
