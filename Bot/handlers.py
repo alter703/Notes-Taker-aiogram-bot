@@ -43,7 +43,7 @@ async def cmd_start(message: Message):
     await message.answer('I am here!')
 
 
-@router.message(Command('send_dock'), ~F.text.in_({'get all notes', 'get note by title'}))
+@router.message(Command('get_dock'), ~F.text.in_({'get all notes', 'get note by title'}))
 async def cmd_start(message: Message, state: FSMContext):
     await state.set_state(SendNoteAsDock.title)
     await message.answer('Type the title to get your note as document (.docx)')
